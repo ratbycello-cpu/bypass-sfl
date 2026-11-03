@@ -1,0 +1,149 @@
+
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#07152f">
+<title>BYPASS - Link Extractor</title>
+<style>
+*{box-sizing:border-box}
+body{
+ margin:0;min-height:100vh;padding:25px 18px;
+ font-family:Arial,sans-serif;color:white;
+ background:radial-gradient(circle at 50% 0%,#164b9b,#07152f 55%,#020817);
+}
+.container{max-width:460px;margin:30px auto}
+.logo{
+ text-align:center;font-size:42px;font-weight:1000;
+ color:#63d9ff;text-shadow:3px 3px 0 #0750a7,0 0 25px #00aaff;
+ transform:skew(-5deg);
+}
+.subtitle{text-align:center;color:#a9dfff;margin:8px 0 30px}
+.panel{
+ padding:23px;border:2px solid #168bff;border-radius:22px;
+ background:linear-gradient(145deg,#122d57,#07152d);
+ box-shadow:0 0 25px #007bff55,inset 0 0 20px #168bff22;
+}
+h3{margin:0 0 15px;color:#76dcff}
+input{
+ width:100%;padding:16px;border-radius:12px;
+ border:2px solid #258fff;background:#06152c;
+ color:white;font-size:15px;outline:none;
+}
+button{
+ width:100%;padding:15px;margin-top:15px;
+ border:0;border-radius:12px;font-weight:bold;
+ font-size:16px;cursor:pointer;color:white;
+ background:linear-gradient(135deg,#168bff,#0750bd);
+ box-shadow:0 5px 0 #063879,0 0 18px #168bff66;
+}
+button:disabled{opacity:.6;cursor:wait}
+.status{text-align:center;color:#8ddfff;margin-top:20px;min-height:24px}
+.loader{
+ display:none;margin:20px auto;width:42px;height:42px;
+ border:5px solid #173d70;border-top-color:#49d8ff;
+ border-radius:50%;animation:spin .8s linear infinite;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+.result{
+ display:none;margin-top:20px;padding:16px;
+ border:1px solid #258fff;border-radius:14px;
+ background:#06152c;overflow-wrap:anywhere;
+}
+.result a{color:#71dfff}
+.small{font-size:12px;color:#9bb8d8;text-align:center;margin-top:25px}
+</style>
+</head>
+<body>
+<div class="container">
+ <div class="logo">⚡ BYPASS ⚡</div>
+ <div class="subtitle">3D COMIC LINK EXTRACTOR</div>
+
+ <div class="panel">
+  <h3>🔗 MASUKKAN LINK SFL</h3>
+  <input id="linkInput" type="url" placeholder="https://contoh-link-sfl..." autocomplete="url">
+  <button id="bypassBtn" onclick="bypass()">⚡ BYPASS SEKARANG</button>
+  <div class="loader" id="loader"></div>
+  <div class="status" id="status">Siap memeriksa link...</div>
+
+  <div class="result" id="result">
+   <h3>✅ HASIL LINK</h3>
+   <div id="destination"></div>
+   <button onclick="copyLink()">📋 SALIN LINK</button>
+   <button onclick="openLink()">🌐 BUKA LINK</button>
+  </div>
+ </div>
+ <div class="small">BYPASS LINK TOOL • Gunakan hanya pada link yang boleh kamu akses.</div>
+</div>
+
+<script>
+let finalUrl = "";
+
+async function bypass(){
+ const input=document.getElementById("linkInput").value.trim();
+ const status=document.getElementById("status");
+ const loader=document.getElementById("loader");
+ const result=document.getElementById("result");
+ const btn=document.getElementById("bypassBtn");
+
+ result.style.display="none";
+ finalUrl="";
+
+ let parsed;
+ try{
+  parsed=new URL(input);
+  if(parsed.protocol!=="https:") throw new Error();
+ }catch{
+  status.textContent="❌ Masukkan link HTTPS yang valid.";
+  return;
+ }
+
+ btn.disabled=true;
+ loader.style.display="block";
+ status.textContent="⏳ Memeriksa link...";
+
+ try{
+  const response=await fetch("/api/extract",{
+   method:"POST",
+   headers:{"Content-Type":"application/json"},
+   body:JSON.stringify({url:parsed.href})
+  });
+
+  const data=await response.json();
+
+  if(!response.ok || !data.success){
+   throw new Error(data.error || "Link tidak dapat diproses.");
+  }
+
+  const destination=new URL(data.destinationUrl);
+  if(destination.protocol!=="https:") throw new Error("Hasil link tidak aman.");
+
+  finalUrl=destination.href;
+  document.getElementById("destination").textContent=finalUrl;
+  result.style.display="block";
+  status.textContent="✅ Link berhasil ditemukan!";
+ }catch(error){
+  status.textContent="❌ "+error.message;
+ }finally{
+  loader.style.display="none";
+  btn.disabled=false;
+ }
+}
+
+async function copyLink(){
+ if(!finalUrl)return;
+ try{
+  await navigator.clipboard.writeText(finalUrl);
+  document.getElementById("status").textContent="✅ Link berhasil disalin!";
+ }catch{
+  document.getElementById("status").textContent="Gagal menyalin. Salin link secara manual.";
+ }
+}
+
+function openLink(){
+ if(finalUrl) window.open(finalUrl,"_blank","noopener,noreferrer");
+}
+</script>
+</body>
+</html>
