@@ -1,0 +1,13 @@
+
+{
+  "name": "bypass-sfl",
+  "version": "1.0.0",
+  "description": "BYPASS 3D COMIC",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.21.2"
+  }
+}
